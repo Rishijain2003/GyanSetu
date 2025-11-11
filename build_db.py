@@ -1,16 +1,16 @@
 import os
-from langchain_community.document_loaders import PyPDFLoader
-from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_community.document_loaders import PyPDFLoader 
+from langchain_text_splitters import RecursiveCharacterTextSplitter 
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
 
 
-#bhagavad Gita Hindi PDF file path
+# 1. The document file is in the working directory
 PDF_FILE_PATH = "Bhagavad-Gita-Hindi.pdf"
-# embedding model used
+# 2. The embedding model you specified
 MODEL_NAME = 'hiiamsid/sentence_similarity_hindi'
-# vector database path
-DB_FAISS_PATH = 'faiss_index'
+# 3. The name of the folder to save the vector database
+DB_FAISS_PATH = 'faiss_hindi_index'
 
 def build_db():
     """
@@ -19,7 +19,7 @@ def build_db():
     """
     print(f"Starting database build for: {PDF_FILE_PATH}")
 
-  
+    # 1. Load the PDF Document
     try:
         print("Loading document...")
         loader = PyPDFLoader(PDF_FILE_PATH)
@@ -31,7 +31,7 @@ def build_db():
         print(f"Error loading PDF: {e}")
         return
 
-    
+    # 2. Split Text into Chunks
     print("Splitting document into chunks...")
     text_splitter = RecursiveCharacterTextSplitter(
         chunk_size=1000,
@@ -40,27 +40,34 @@ def build_db():
     )
     texts = text_splitter.split_documents(documents)
     print(f"Generated {len(texts)} text chunks.")
+    
+    
+    print("\nDiagnostic Check: Sample of First Chunk Content")
+    print("Chunk 1 Sample:")
+    print(texts[0].page_content[:1000]) #
+    print("-------------------------------------------\n")
 
-  
+
+    
+    # 3. Initialize the Hindi Embedding Model
     print(f"Initializing Hindi embedding model: {MODEL_NAME}...")
-
+    # The HuggingFaceEmbeddings class loads the SentenceTransformer model
     embeddings = HuggingFaceEmbeddings(
         model_name=MODEL_NAME,
         model_kwargs={'device': 'cpu'}, 
         encode_kwargs={'normalize_embeddings': True}
     )
 
-    
+
     print(f"Creating FAISS index and generating {len(texts)} embeddings...")
     db = FAISS.from_documents(texts, embeddings)
     
-    
+    # Save the database locally
     db.save_local(DB_FAISS_PATH)
     
     print("\nDatabase build complete!")
     print(f"The vector index is saved to the directory: **{DB_FAISS_PATH}**")
-    print(f"You are now ready to build your Hindi chatbot retrieval system.")
 
 if __name__ == '__main__':
-   
+
     build_db()
